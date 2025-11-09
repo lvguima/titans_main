@@ -99,13 +99,13 @@ def get_args():
                         help='Memory内部模型类型')
     
     # ==================== 训练配置 ====================
-    parser.add_argument('--train_epochs', type=int, default=10,
+    parser.add_argument('--train_epochs', type=int, default=5,
                         help='预训练轮数')
     parser.add_argument('--batch_size', type=int, default=32,
                         help='批大小')
     parser.add_argument('--learning_rate', type=float, default=1e-4,
                         help='预训练学习率')
-    parser.add_argument('--patience', type=int, default=7,
+    parser.add_argument('--patience', type=int, default=3,
                         help='早停patience')
     parser.add_argument('--clip_grad', type=float, default=1.0,
                         help='梯度裁剪阈值')

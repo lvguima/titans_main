@@ -148,7 +148,7 @@ def get_args():
                         help='测试时启用在线学习（NeuralMemory持续适应）: 1-启用, 0-禁用')
     parser.add_argument('--online_lr', type=float, default=1e-4, 
                         help='在线学习学习率（仅在online_update_memory_only=False时用于更新backbone）')
-    parser.add_argument('--online_update_memory_only', action='store_true', default=False,
+    parser.add_argument('--online_update_memory_only', action='store_true', default=True,
                         help='在线学习仅更新记忆（True=信任NeuralMemory自动更新，False=额外用optimizer更新backbone）')
     
     # ==================== 优化器配置 ====================
