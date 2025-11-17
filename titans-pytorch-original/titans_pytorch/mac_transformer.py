@@ -108,6 +108,7 @@ def pad_at_dim(t, pad, dim = -1, value = 0.):
     zeros = ((0, 0) * dims_from_right)
     return F.pad(t, (*zeros, *pad), value = value)
 
+# 对输入序列进行填充和分段处理，并返回一个逆操作函数用于恢复原始序列形状
 def pad_and_segment_with_inverse(
     seq,
     segment_len,
@@ -725,19 +726,28 @@ class MemoryAsContextTransformer(Module):
         # intersperse longterm memory
 
         x, inverse_segment = pad_and_segment_with_inverse(x, segment_len, inverse_remove_pad = False)
-
+        
+        # self.longterm_mems 是可学习的长期记忆token，形状为 [num_longterm_mem_tokens, dim]
+        # 这里将长期记忆token复制 batch 次，得到形状为 [batch, num_longterm_mem_tokens, dim] 的 mems
+        # 最终目的是将长期记忆token添加到输入序列中，以便模型能够更好地处理长期记忆
         mems = repeat(self.longterm_mems, 'n d -> b n d', b = x.shape[0])
+        # 将输入序列 x 和长期记忆 mems 打包成一个元组，形状为 [batch, seq_len + num_longterm_mem_tokens, dim]
         x, inverse_pack_mems = pack_with_inverse((x, mems), 'b * d')
+
+        # 逆操作函数 inverse_segment 用于恢复原始序列形状
+        # 因为pack操作会改变序列的形状，所以需要先pack再inverse_segment
 
         x = inverse_segment(x)
 
         # splice out unneeded tokens from padding for longterm mems
-
+        # 截取输入序列 x 中需要的部分，形状为 [batch, seq_len_with_mem, dim]
         x = x[:, :seq_len_with_mem]
 
         # apply axial positional embedding
         # so intra and inter segment can be more easily discerned by the network
-
+        # 对输入序列 x 应用轴向位置嵌入，形状为 [batch, seq_len_with_mem, dim]
+        # 这里为什么要使用轴向位置嵌入？
+        # 因为轴向位置嵌入可以更好地捕捉序列中的局部和全局关系
         pos_emb = self.axial_pos_emb.forward_with_seq_len(seq_len_with_mem, (neural_mem_segment_len,), factorized = factorized_pos_emb)
 
         x = x + pos_emb

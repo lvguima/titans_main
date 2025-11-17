@@ -38,7 +38,7 @@ def get_args():
     
     # ==================== 数据配置 ====================
     parser.add_argument('--data', type=str, default='synthetic', 
-                        help='数据集名称: synthetic, ETTh1, ETTh2, ETTm1, ETTm2, custom')
+                        help='数据集名称: realistic_drift_data, ETTh1, ETTh2, ETTm1, ETTm2, custom')
     parser.add_argument('--root_path', type=str, default='./dataset/', 
                         help='数据集根目录')
     parser.add_argument('--data_path', type=str, default='realistic_drift_data.csv', 
@@ -72,7 +72,7 @@ def get_args():
     
     # ==================== Titans模型配置 ====================
     parser.add_argument('--dim', type=int, default=384, 
-                        help='模型维度')
+                        help='输入映射到的模型维度')
     parser.add_argument('--depth', type=int, default=6, 
                         help='Transformer层数')
     parser.add_argument('--segment_len', type=int, default=32, 
@@ -130,7 +130,7 @@ def get_args():
                         help='使用滑动窗口注意力')
     
     # ==================== 训练配置 ====================
-    parser.add_argument('--train_epochs', type=int, default=3, 
+    parser.add_argument('--train_epochs', type=int, default=10, 
                         help='训练轮数')
     parser.add_argument('--batch_size', type=int, default=32, 
                         help='批大小')
@@ -138,7 +138,7 @@ def get_args():
                         help='学习率')
     parser.add_argument('--train_update_freq', type=int, default=1, 
                         help='训练更新频率（梯度累积步数，1=每个batch更新，4=每4个batch累积后更新，相当于batch_size*4）')
-    parser.add_argument('--patience', type=int, default=7, 
+    parser.add_argument('--patience', type=int, default=5, 
                         help='早停耐心值')
     parser.add_argument('--clip_grad', type=float, default=1.0, 
                         help='梯度裁剪阈值')
@@ -148,7 +148,7 @@ def get_args():
                         help='测试时启用在线学习（NeuralMemory持续适应）: 1-启用, 0-禁用')
     parser.add_argument('--online_lr', type=float, default=1e-4, 
                         help='在线学习学习率（仅在online_update_memory_only=False时用于更新backbone）')
-    parser.add_argument('--online_update_memory_only', action='store_true', default=True,
+    parser.add_argument('--online_update_memory_only', action='store_true', default=False,
                         help='在线学习仅更新记忆（True=信任NeuralMemory自动更新，False=额外用optimizer更新backbone）')
     
     # ==================== 优化器配置 ====================
@@ -202,7 +202,9 @@ def get_args():
         args.device_ids = [int(id_) for id_ in device_ids]
         args.gpu = args.device_ids[0]
     
-    # 解析神经记忆层位置
+    # 指定哪些层作为神经记忆层
+    # 从字符串格式转换为整数元组
+    # 检查该参数是否为字符串类型
     if isinstance(args.neural_memory_layers, str):
         args.neural_memory_layers = tuple([int(x) for x in args.neural_memory_layers.split(',')])
     

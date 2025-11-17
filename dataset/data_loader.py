@@ -209,9 +209,24 @@ class SyntheticDriftDataset(Dataset):
         # 读取数据
         df_raw = pd.read_csv(os.path.join(self.root_path, self.data_path))
         
-        # 固定划分点（针对漂移数据集）
-        train_split = 3500
-        test_split = 4000
+        # 数据集划分
+        # 旧版默认固定在 3500 / 4000，但这会在替换数据集时导致统计信息不准确
+        # 这里改为根据数据长度自适应比例划分（70% / 10% / 20%），
+        # 当数据量与旧版一致时仍会得到相同的分割点。
+        n_total = len(df_raw)
+        train_ratio = 0.7
+        val_ratio = 0.1
+
+        train_split = int(n_total * train_ratio)
+        val_split = int(n_total * val_ratio)
+
+        # 保证留有序列长度空间
+        train_split = max(train_split, self.seq_len + self.pred_len)
+        val_split = max(val_split, self.seq_len)
+
+        # 防止超出总长度
+        train_split = min(train_split, n_total)
+        test_split = min(train_split + val_split, n_total)
         
         if self.flag == 'train':
             border1, border2 = 0, train_split

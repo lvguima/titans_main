@@ -45,7 +45,7 @@ def get_args():
                         help='数据集名称')
     parser.add_argument('--root_path', type=str, default='./dataset/',
                         help='数据集根目录')
-    parser.add_argument('--data_path', type=str, default='realistic_drift_data.csv',
+    parser.add_argument('--data_path', type=str, default='ETTh1.csv',
                         help='数据文件名')
     parser.add_argument('--features', type=str, default='M',
                         help='预测任务: M=多对多, S=单对单, MS=多对单')
@@ -72,13 +72,14 @@ def get_args():
     parser.add_argument('--backbone_type', type=str, default='titans',
                         choices=['lstm', 'transformer', 'titans'],
                         help='Backbone类型')
-    parser.add_argument('--memory_type', type=str, default='titans_mlp',
+    parser.add_argument('--memory_type', type=str, default='titans_attention',
                         choices=['titans_mlp', 'titans_attention', 'none'],
                         help='Memory Unit类型')
     parser.add_argument('--fusion_type', type=str, default='add',
                         choices=['add', 'concat', 'gated'],
                         help='特征融合方式')
-    
+    parser.add_argument('--num_workers', type=int, default=0,
+                    help='DataLoader 的线程数')
     # ==================== Backbone配置 ====================
     parser.add_argument('--d_model', type=int, default=384,
                         help='Backbone隐藏维度')
