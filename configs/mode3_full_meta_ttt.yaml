@@ -1,0 +1,51 @@
+# 模式3: Full Meta-TTT (自适应策略)
+# 带LMM，并使用元学习器动态生成更新策略
+
+# 继承基础配置
+# 可以使用: python titans_main.py --config configs/mode3_full_meta_ttt.yaml
+
+# ==================== 实验标识 ====================
+des: mode3_full_meta_ttt
+
+# ==================== 运行模式 ====================
+is_training: 1
+do_online_test: 1
+
+# ==================== 模型架构 ====================
+backbone_type: transformer  # 也可以尝试titans
+memory_type: lmm_mlp  # 关键: 使用LMM
+fusion_type: add
+
+# ==================== 元学习配置 ====================
+use_meta_learning: 1  # 关键: 启用元学习
+meta_learner_type: adaptive  # 关键: 使用自适应策略
+meta_learner_hidden_dim: 128
+
+# 元学习器会动态生成这些参数，所以不需要固定值
+# fixed_theta, fixed_eta, fixed_alpha 在这个模式下不使用
+
+# ==================== Backbone配置 ====================
+d_model: 256
+e_layers: 3
+n_heads: 8
+
+# ==================== Memory配置 ====================
+memory_chunk_size: 1
+neural_memory_batch_size: 512
+memory_model_type: mlp
+
+# ==================== 训练配置 ====================
+train_epochs: 10  # 元学习通常需要更多epoch
+batch_size: 2
+learning_rate: 5.0e-6  # 元学习可能需要更小的学习率
+
+# ==================== 在线测试配置 ====================
+test_mode: memory_only  # 只让Memory学习，Backbone冻结
+online_lr: 1.0e-5
+
+# 期望效果:
+# 这是我们的终极目标！
+# Meta-Learner会学习如何动态调整LMM的更新策略。
+# 性能预期: 应该是三种模式中最好的。
+# 能够根据上下文动态调整学习率、动量和遗忘率，实现真正的"学习如何学习"。
+

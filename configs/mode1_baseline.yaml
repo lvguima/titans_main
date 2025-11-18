@@ -1,0 +1,40 @@
+# 模式1: Baseline (无Memory)
+# 标准在线学习，不使用LMM
+
+# 继承基础配置
+# 可以使用: python titans_main.py --config configs/mode1_baseline.yaml
+
+# ==================== 实验标识 ====================
+des: mode1_baseline
+
+# ==================== 运行模式 ====================
+is_training: 1
+do_online_test: 1
+
+# ==================== 模型架构 ====================
+backbone_type: transformer
+memory_type: none  # 关键: 不使用Memory
+fusion_type: add
+
+# ==================== 元学习配置 ====================
+use_meta_learning: 0  # Baseline不使用元学习
+meta_learner_type: fixed
+
+# ==================== Backbone配置 ====================
+d_model: 256
+e_layers: 3
+n_heads: 8
+
+# ==================== 训练配置 ====================
+train_epochs: 5
+batch_size: 2
+learning_rate: 1.0e-5
+
+# ==================== 在线测试配置 ====================
+test_mode: full_model  # Baseline只能用full_model模式（因为没有Memory）
+online_lr: 1.0e-5
+
+# 期望效果:
+# 这是最简单的基线模型，用于对比有Memory的模型是否有提升。
+# 性能预期: 中等偏下，作为其他模式的对比基准。
+

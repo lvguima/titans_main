@@ -1,0 +1,64 @@
+# 基础配置 - 所有实验的共同配置
+# 可以被具体实验配置覆盖
+
+# ==================== 基础设置 ====================
+seed: 2021
+model_id: continual_forecaster
+
+# ==================== 数据配置 ====================
+data: synthetic
+root_path: ./dataset/
+data_path: realistic_drift_data.csv
+features: M  # M=多对多, S=单对单, MS=多对单
+target: target
+freq: h
+
+# ==================== 序列配置 ====================
+seq_len: 64
+label_len: 0
+pred_len: 1
+
+# ==================== Backbone配置 ====================
+backbone_type: transformer  # lstm, transformer, titans
+d_model: 256  # 8GB GPU建议256
+e_layers: 3   # 8GB GPU建议3
+n_heads: 8
+dropout: 0.1
+
+# ==================== Memory配置 ====================
+memory_chunk_size: 1
+neural_memory_batch_size: 512
+memory_model_type: mlp
+fusion_type: add
+
+# ==================== 训练配置 ====================
+train_epochs: 5
+batch_size: 2
+learning_rate: 1.0e-5
+patience: 3
+clip_grad: 0.5
+
+optimizer: adam
+weight_decay: 0.0
+loss: mse
+lradj: type1
+
+# ==================== 在线测试配置 ====================
+test_mode: memory_only  # memory_only 或 full_model
+online_lr: 1.0e-5
+
+# ==================== 日志和保存配置 ====================
+log_interval: 100
+save_pred: true
+save_fig: true
+checkpoints: ./checkpoints/
+result_path: ./results/
+fig_path: ./figs/
+
+# ==================== GPU配置 ====================
+use_gpu: true
+gpu: 0
+use_multi_gpu: false
+devices: '0,1'
+num_workers: 0
+

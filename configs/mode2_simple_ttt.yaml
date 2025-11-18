@@ -1,0 +1,52 @@
+# 模式2: Simple TTT (固定策略)
+# 带LMM，但使用固定的更新策略
+
+# 继承基础配置
+# 可以使用: python titans_main.py --config configs/mode2_simple_ttt.yaml
+
+# ==================== 实验标识 ====================
+des: mode2_simple_ttt
+
+# ==================== 运行模式 ====================
+is_training: 1
+do_online_test: 1
+
+# ==================== 模型架构 ====================
+backbone_type: transformer
+memory_type: lmm_mlp  # 关键: 使用LMM
+fusion_type: add
+
+# ==================== 元学习配置 ====================
+use_meta_learning: 0  # 不启用元学习
+meta_learner_type: fixed  # 使用固定策略
+meta_learner_hidden_dim: 128
+
+# 固定的元参数
+fixed_theta: 0.001  # 固定学习率
+fixed_eta: 0.9      # 固定动量
+fixed_alpha: 0.1    # 固定遗忘率
+
+# ==================== Backbone配置 ====================
+d_model: 256
+e_layers: 3
+n_heads: 8
+
+# ==================== Memory配置 ====================
+memory_chunk_size: 1
+neural_memory_batch_size: 512
+memory_model_type: mlp
+
+# ==================== 训练配置 ====================
+train_epochs: 5
+batch_size: 2
+learning_rate: 1.0e-5
+
+# ==================== 在线测试配置 ====================
+test_mode: memory_only  # 只让Memory学习，Backbone冻结
+online_lr: 1.0e-5
+
+# 期望效果:
+# LMM能够在线适应数据漂移，但更新策略是固定的。
+# 性能预期: 应该优于Baseline，但不如Full Meta-TTT。
+# 用于验证LMM本身的有效性。
+

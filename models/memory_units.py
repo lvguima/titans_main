@@ -40,13 +40,15 @@ class TitansMemoryWrapper(nn.Module):
         dim_head: int = None,
         mlp_depth: int = 2,
         mlp_expansion_factor: float = 4.0,
-        momentum: bool = True,
+        momentum: bool = False,  # 默认关闭momentum以提高稳定性
         momentum_order: int = 1,
         attn_pool_chunks: bool = False,
         qk_rmsnorm: bool = False,
         per_parameter_lr_modulation: bool = False,
         spectral_norm_surprises: bool = False,
         max_grad_norm: float = None,
+        default_step_transform_max_lr: float = 0.001,  # 默认使用极小的学习率
+        init_adaptive_step_bias: float = -15.0,  # 默认初始化为极小的步长
         **kwargs
     ):
         super().__init__()
@@ -85,6 +87,8 @@ class TitansMemoryWrapper(nn.Module):
             per_parameter_lr_modulation=per_parameter_lr_modulation,
             spectral_norm_surprises=spectral_norm_surprises,
             max_grad_norm=max_grad_norm,
+            default_step_transform_max_lr=default_step_transform_max_lr,
+            init_adaptive_step_bias=init_adaptive_step_bias,
             **kwargs
         )
         
@@ -99,22 +103,51 @@ class TitansMemoryWrapper(nn.Module):
             retrieved_memory: [batch, seq_len, dim] - 从记忆中检索的信息
             next_cache: NeuralMemState (如果return_cache=True)
         """
-        if return_cache:
-            # 持续学习模式：维护cache跨batch累积
-            retrieved_memory, next_cache = self.neural_memory(
-                seq=features,
-                state=cache,
-                return_surprises=False
-            )
-            return retrieved_memory, next_cache
-        else:
-            # 独立batch模式：每个batch独立处理
-            retrieved_memory, _ = self.neural_memory(
-                seq=features,
-                state=None,
-                return_surprises=False
-            )
-            return retrieved_memory, None
+        # 检查输入特征
+        if torch.isnan(features).any() or torch.isinf(features).any():
+            raise RuntimeError(f"Memory Unit 输入包含nan/inf！features range: [{features.min().item()}, {features.max().item()}]")
+        
+        try:
+            if return_cache:
+                # 持续学习模式：维护cache跨batch累积
+                retrieved_memory, next_cache = self.neural_memory(
+                    seq=features,
+                    state=cache,
+                    return_surprises=False
+                )
+                return retrieved_memory, next_cache
+            else:
+                # 独立batch模式：每个batch独立处理
+                retrieved_memory, _ = self.neural_memory(
+                    seq=features,
+                    state=None,
+                    return_surprises=False
+                )
+                
+                # 检查输出
+                if torch.isnan(retrieved_memory).any() or torch.isinf(retrieved_memory).any():
+                    # 打印详细调试信息
+                    print(f"\n❌ NeuralMemory 输出包含nan/inf！")
+                    print(f"   输入特征范围: [{features.min().item():.6f}, {features.max().item():.6f}]")
+                    print(f"   输入特征均值: {features.mean().item():.6f}, std: {features.std().item():.6f}")
+                    print(f"   输出范围: [{retrieved_memory.min().item() if not torch.isnan(retrieved_memory).all() else 'all_nan'}, "
+                          f"{retrieved_memory.max().item() if not torch.isnan(retrieved_memory).all() else 'all_nan'}]")
+                    print(f"   nan数量: {torch.isnan(retrieved_memory).sum().item()}/{retrieved_memory.numel()}")
+                    print(f"   inf数量: {torch.isinf(retrieved_memory).sum().item()}/{retrieved_memory.numel()}")
+                    
+                    # 尝试检查 NeuralMemory 内部参数
+                    print(f"\n   NeuralMemory 配置:")
+                    print(f"     - dim: {self.dim}")
+                    print(f"     - chunk_size: {self.chunk_size}")
+                    print(f"     - batch_size: {self.neural_memory_batch_size}")
+                    print(f"     - memory_model_type: {self.memory_model_type}")
+                    
+                return retrieved_memory, None
+        except Exception as e:
+            print(f"\n❌ NeuralMemory 前向传播异常: {type(e).__name__}: {e}")
+            print(f"   输入特征形状: {features.shape}")
+            print(f"   输入特征范围: [{features.min().item():.6f}, {features.max().item():.6f}]")
+            raise
     
     def get_config(self):
         """返回当前Memory Unit的配置信息"""
